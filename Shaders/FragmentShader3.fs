@@ -51,7 +51,7 @@ Energy.w += (nX.x*nX.w-pX.x*pX.w+nY.y*nY.w-pY.y*pY.w)/4.0;
 
 float D = distance(Me,vec2((1.0+aMouse.x)*iResolution.x*0.5,(1.0-aMouse.y)*0.5*iResolution.y));
 
-Energy.w= (D<10)  && (aMouse.z>0) ? 1.0: Energy.w;
+Energy.w = (D<10)  && (aMouse.z>0) ? 1.0: Energy.w;
 
 if(Me.x<10.||Me.y<10.||iResolution.x-Me.x<10.||iResolution.y-Me.y<10.)
 {

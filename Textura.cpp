@@ -10,8 +10,13 @@
 #include <unistd.h>
 #include <filesystem>
 
+#include "VertexArray.h"
+#include "Vertex.h"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window,double *mouse, bool * shouldDraw,  bool * press);
+
+static int erros = 0;
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -27,6 +32,14 @@ unsigned int indices[] = {
     0,1,3,
     1,2,3
 };
+
+static void getError(){
+    erros++;
+    std::cout << erros << std::endl;
+    while(GLenum error = glGetError()){
+        std::cout << std::hex << "openGL: " << error << std::endl;
+    }
+}
 
 int main()
 {
@@ -97,24 +110,47 @@ int main()
     ////////////////////
     // OPENGL BÁSICOS //
     ////////////////////
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-    glBindVertexArray(VAO);
+    // unsigned int VBO, VAO, EBO;
+    // glGenVertexArrays(1, &VAO);
+    // glGenBuffers(1, &VBO);
+    // glGenBuffers(1, &EBO);
+    // glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER,VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+    // glBindBuffer(GL_ARRAY_BUFFER,VBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),indices, GL_STREAM_DRAW);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices),indices, GL_STREAM_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),(void *)0 );
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),(void *) (3*sizeof(float)) );
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float),(void *) (6*sizeof(float)) );
-    glEnableVertexAttribArray(2);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),(void *)0 );
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float),(void *) (3*sizeof(float)) );
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float),(void *) (6*sizeof(float)) );
+    // glEnableVertexAttribArray(2);
+
+
+    
+    VertexArray va;
+    va.bind();
+    
+    VertexBuffer vb(vertices, 8*4*sizeof(float));
+    
+
+    VertexBufferElement ib(indices, 6);
+    ib.bind();
+    
+    VertexBufferLayout layout;
+
+    
+    layout.pushF(3);
+    layout.pushF(3);
+    layout.pushF(2);
+
+    va.addBuffer(vb, layout);
+
+    
+    
 
     ////////////////////
     //    TEXTURES    //
@@ -192,8 +228,8 @@ int main()
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-glBindFramebuffer(GL_FRAMEBUFFER, 0);
-double * mouse = (double *) malloc(sizeof(double)*4);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    double * mouse = (double *) malloc(sizeof(double)*4);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textura); 
@@ -220,7 +256,7 @@ double * mouse = (double *) malloc(sizeof(double)*4);
         //Utilização de um segundo shader para calcular vizinhança
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texturaFBO); 
-        Shaderprogram3.use(); 
+        Shaderprogram3.use();
         Shaderprogram3.setSampler("Texture");
         Shaderprogram3.setVec2("iResolution",resolution);
         Shaderprogram3.setVec4("mouse", mouse);
@@ -230,16 +266,20 @@ double * mouse = (double *) malloc(sizeof(double)*4);
         //Renderizando para a tela
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texturaFBO);
+
         Shaderprogram.use();
         Shaderprogram.setSampler("Texture");
         Shaderprogram.setVec2("iResolution",resolution);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -247,9 +287,13 @@ double * mouse = (double *) malloc(sizeof(double)*4);
 
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    va.~VertexArray();
+    vb.~VertexBuffer();
+    ib.~VertexBufferElement();
+
+    // glDeleteVertexArrays(1, &VAO);
+    // glDeleteBuffers(1, &VBO);
+    // glDeleteBuffers(1, &EBO);
     glDeleteFramebuffers(1, &FBO);
 
     glfwTerminate();

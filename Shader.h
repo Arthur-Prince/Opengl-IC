@@ -101,6 +101,10 @@ public:
     {
          glUniform1i(glGetUniformLocation(ID, name.c_str()), 0);
     }
+    void setSampler(const std::string &name, unsigned int value) const
+    {
+         glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+    }
      void setVec4(const std::string &name, double value[]) const
     {
          glUniform4f(glGetUniformLocation(ID, name.c_str()), value[0], value[1], value[2], value[3]);
