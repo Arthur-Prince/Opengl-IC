@@ -1,0 +1,7 @@
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/OpenGL.dir
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/edit_cache.dir
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/rebuild_cache.dir
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/list_install_components.dir
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/install.dir
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/install/local.dir
+/home/arthur/Documentos/SPH/SPH_ShaderToy/build/CMakeFiles/install/strip.dir
