@@ -1,6 +1,7 @@
 #version 460 core
 
 uniform sampler2D bufferA;
+uniform sampler2D cor;
 uniform sampler2D bufferB;
 uniform sampler2D bufferC;
 uniform sampler2D stop;
@@ -46,36 +47,45 @@ void main()
     ivec2 p = ivec2(pos);
     
     vec4 data = texel(bufferA, pos);
-    particle P = getParticle(data, pos);
+    vec4 massa = texel(cor, pos);
+    particle P = getParticle(data, massa, pos);
+    //P.M *= P.M.w;
     
     //border render
     vec3 Nb = bN(P.X);
     float bord = smoothstep(2.*border_h,border_h*1.0,border(pos));
     
-    vec4 rho = V(pos);
-    vec3 dx = vec3(-2., 0., 2.);
-    vec4 grad = -0.5*vec4(V(pos + dx.zy).zw - V(pos + dx.xy).zw,
-                         V(pos + dx.yz).zw - V(pos + dx.yx).zw);
-    vec2 N = pow(length(grad.xz),0.2)*normalize(grad.xz+1e-5);
-    float specular = pow(max(dot(N, Dir(1.4)), 0.), 3.5);
-    float specularb = G(0.4*(Nb.zz - border_h))*pow(max(dot(Nb.xy, Dir(1.4)), 0.), 3.);
+    // vec4 rho = V(pos);
+    // //vec3 dx = vec3(-2., 0., 2.);
+    // //vec4 grad = -0.5*vec4(V(pos + dx.zy).zw - V(pos + dx.xy).zw,
+    // //                     V(pos + dx.yz).zw - V(pos + dx.yx).zw);
+    // //vec2 N = pow(length(grad.xz),0.2)*normalize(grad.xz+1e-5);
+    // //float specular = pow(max(dot(N, Dir(1.4)), 0.), 3.5);
+    // float specularb = G(0.4*(Nb.zz - border_h))*pow(max(dot(Nb.xy, Dir(1.4)), 0.), 3.);
     
-    float a = pow(smoothstep(fluid_rho*0., fluid_rho*2., rho.z),0.1);
-    float b = exp(-1.7*smoothstep(fluid_rho*1., fluid_rho*7.5, rho.z));
-    vec3 col0 = vec3(1., 0.5, 0.);
-    vec3 col1 = vec3(0.1, 0.4, 1.);
-	vec3 fcol = mixN(col0, col1, tanh(3.*(rho.w - 0.7))*0.5 + 0.5);
-    // Output to screen
-    col = vec4(3.);
-    col.xyz = mixN(col.xyz, fcol.xyz*(1.5*b + specularb*5.), a);
-    col.xyz = mixN(col.xyz, 0.*vec3(0.7,0.7,1.), bord);
-    col.xyz = tanh(col.xyz);
+    // float a = pow(smoothstep(fluid_rho*0., fluid_rho*2., rho.z),0.1);
+    // float b = exp(-1.7*smoothstep(fluid_rho*1., fluid_rho*7.5, rho.z));
+    // vec3 col0 = vec3(1., 0.5, 0.);
+    // vec3 col1 = vec3(0.1, 0.4, 1.);
+	// vec3 fcol = mixN(col0, col1, tanh(3.*(rho.w - 0.7))*0.5 + 0.5);
+    // // Output to screen
+    // col = vec4(3.);
+    // col.xyz = mixN(col.xyz, fcol.xyz*(1.5*b + specularb*5.), a);
+    // col.xyz = mixN(col.xyz, 0.*vec3(0.7,0.7,1.), bord);
+    // col.xyz = tanh(col.xyz);
     //vec4 data = texel(bufferC, pos); 
-
-    vec2 proxP = posV+P.V+P.X;
-    vec4 pixel = texture(stop, proxP);
-    //vec4 pixel = texel(stop, posV);
-    if(pixel.x <0.1 && pixel.y <0.1 && pixel.z <0.1){
-        col=pixel;
+    vec4 pixel = texture(stop, posV);
+    vec4 rtn = vec4(0.);
+    if(pixel.xyz == vec3(0.)){
+        rtn = vec4(1.,0.,0.,0.);
     }
+    rtn+= P.M*P.M.w;
+    col = rtn;
+    //col += abs(vec4(bord)) +P.M*P.M.w;
+    //col = texture(stop,posV);
+    
+
+
+    //vec4 rtn = texel(cor, pos);
+    
 }

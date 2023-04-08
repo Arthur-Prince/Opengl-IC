@@ -72,7 +72,7 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
+    glfwSwapInterval(0);
     //Habilita mensagens de debug
 
     OpenGLAPI::DebugManager* debugManager = nullptr;
@@ -218,7 +218,7 @@ int main()
 
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(1);
-    unsigned char *data = stbi_load("../eba2.png", &width, &height, &nrChannels, 4);
+    unsigned char *data = stbi_load("../lab.png", &width, &height, &nrChannels, 4);
     
 
     OpenGLAPI::Texture imag(height, width, data, GL_RGBA32F, GL_RGBA);
@@ -232,23 +232,25 @@ int main()
     stbi_image_free(data);
 
 
-
+    Framebuffer test;
+    test.addOutputTexture(SCR_HEIGHT,SCR_WIDTH);
+    test.setshader(&ShaderProgramText);
 
 
     Framebuffer FBOA;
-    FBOA.addOutputTexture(SCR_HEIGHT,SCR_WIDTH);
+    FBOA.addOutputTexture(SCR_HEIGHT,SCR_WIDTH,2);
     FBOA.setshader(&ShaderprogramA);
 
     Framebuffer FBOB;
-    FBOB.addOutputTexture(SCR_HEIGHT,SCR_WIDTH);
+    FBOB.addOutputTexture(SCR_HEIGHT,SCR_WIDTH,2);
     FBOB.setshader(&ShaderprogramB);
 
     Framebuffer FBOC;
-    FBOC.addOutputTexture(SCR_HEIGHT,SCR_WIDTH);
+    FBOC.addOutputTexture(SCR_HEIGHT,SCR_WIDTH,2);
     FBOC.setshader(&ShaderprogramC);
 
     Framebuffer FBOD;
-    FBOD.addOutputTexture(SCR_HEIGHT,SCR_WIDTH);
+    FBOD.addOutputTexture(SCR_HEIGHT,SCR_WIDTH,2);
     //FBOD.setshader(&ShaderprogramD);
 
 
@@ -281,6 +283,8 @@ int main()
         atualShader.setInt("Frame", frame);
         FBOB.getTexture(1,0);
         atualShader.setSampler("bufferB",1);
+        FBOB.getTexture(2,1);
+        atualShader.setSampler("cor",2);
         atualShader.setDefaultParams(arrayInput);
 
         glActiveTexture(GL_TEXTURE3);
@@ -292,42 +296,50 @@ int main()
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
 
-        //////////////////////////////////////////
+        ////////////////////////////////////////
         FBOB.bind();
         atualShader = FBOB.getShader();
 
         atualShader.use();
         FBOA.getTexture(0,0);
         atualShader.setSampler("bufferA",0);
+        FBOA.getTexture(4,1);
+        atualShader.setSampler("cor",4);
+
         atualShader.setDefaultParams(arrayInput);
-        glActiveTexture(GL_TEXTURE5);
+
+        glActiveTexture(GL_TEXTURE7);
         imag.bind();
-        ShaderProgramImage.setSampler("borda",5);
+        atualShader.setSampler("stop",7);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
 
         //////////////////////////////////////////
-        FBOC.bind();
-        atualShader = FBOC.getShader();
+        // FBOC.bind();
+        // atualShader = FBOC.getShader();
 
-        atualShader.use();
-        FBOA.getTexture(0,0);
-        atualShader.setSampler("bufferA",0);
-        atualShader.setDefaultParams(arrayInput);
+        // atualShader.use();
+        // FBOA.getTexture(0,0);
+        // atualShader.setSampler("bufferA",0);
+        // FBOA.getTexture(1,1);
+        // atualShader.setSampler("cor",1);
+        // atualShader.setDefaultParams(arrayInput);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
 
         //////////////////////////////////////////
 
         //Renderizando para a tela
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        // glClear(GL_COLOR_BUFFER_BIT);
 
         ShaderProgramImage.use();
         FBOA.getTexture(0,0);
         ShaderProgramImage.setSampler("bufferA",0);
+        FBOA.getTexture(3,1);
+        ShaderProgramImage.setSampler("cor",3);
         FBOB.getTexture(1,0);
         ShaderProgramImage.setSampler("bufferB",1);
         FBOC.getTexture(2,0);
@@ -343,6 +355,65 @@ int main()
 
 
 
+        // FBOA.bind();
+        // Shader a = FBOA.getShader();
+
+        // a.use();
+
+
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
+
+        //Renderizando para o framebuffer criado
+        // FBOB.bind();
+        // atualShader = FBOB.getShader();
+
+        //Utilização de um segundo shader para calcular vizinhança
+        // atualShader.use();
+        // atualShader.setInt("Frame", frame);
+        // FBOB.getTexture(1,0);
+        // atualShader.setSampler("bufferB",1);
+        // FBOB.getTexture(2,1);
+        // atualShader.setSampler("cor",2);
+        // atualShader.setDefaultParams(arrayInput);
+
+        // glActiveTexture(GL_TEXTURE3);
+        // imag.bind();
+        // atualShader.setSampler("stop",3);
+
+
+
+
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
+
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        // glClear(GL_COLOR_BUFFER_BIT);
+
+        // atualShader = test.getShader();
+        // atualShader.use();
+
+        // glActiveTexture(GL_TEXTURE5);
+        // imag.bind();
+        // ShaderProgramImage.setSampler("bo",5);
+
+        // FBOA.getTexture(0,0);
+        // atualShader.setSampler("Texture0", 0);
+        // FBOA.getTexture(1,1);
+        // atualShader.setSampler("Texture1", 1);
+        // FBOB.getTexture(2,0);
+        // atualShader.setSampler("Texture2", 2);
+        // FBOB.getTexture(3,1);
+        // atualShader.setSampler("Texture3", 3);
+
+
+        // atualShader.setDefaultParams(arrayInput);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,0);
+
+
+
+
+
   
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -355,7 +426,7 @@ int main()
     FBOB.~Framebuffer();
     FBOC.~Framebuffer();
     FBOD.~Framebuffer();
-    //text.~Framebuffer();
+    test.~Framebuffer();
 
     glfwTerminate();
     return 0;

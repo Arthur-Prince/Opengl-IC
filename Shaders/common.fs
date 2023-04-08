@@ -16,11 +16,11 @@
 
 #define fluid_rho 0.5
 
-float Pf(vec2 rho)
+float Pf(vec4 rho)
 {
     //return 0.2*rho.x; //gas
     float GF = 1.;//smoothstep(0.49, 0.5, 1. - rho.y);
-    return mix(0.5*rho.x,0.04*rho.x*(rho.x/fluid_rho - 1.), GF); //water pressure
+    return mix(0.5*rho.w,0.04*rho.w*(rho.w/fluid_rho - 1.), GF); //water pressure
 }
 
 mat2 Rot(float ang)
@@ -43,8 +43,8 @@ float sdBox( in vec2 p, in vec2 b )
 float border(vec2 p)
 {
     float bound = -sdBox(p - R*0.5, R*vec2(0.5, 0.5)); 
-    float box = sdBox(Rot(0.)*(p - R*vec2(0.5, 0.6)) , R*vec2(0.05, 0.01));
-    float drain = -sdBox(p - R*vec2(0.5, 0.7), R*vec2(1.5, 0.5));
+    float box = sdBox(Rot(0.*time)*(p - R*vec2(1.5, 0.6)) , R*vec2(0.05, 0.01));
+    float drain = -sdBox(p - R*vec2(0.5, 2.0), R*vec2(1.5, 0.5));
     return max(drain,min(bound, box));
 }
 
@@ -60,50 +60,29 @@ vec3 bN(vec2 p)
     return vec3(normalize(r.xy), r.z + 1e-4);
 }
 
-uint pack(vec2 x)
-{
-    x = 65534.0*clamp(0.5*x+0.5, 0., 1.);
-    return uint(round(x.x)) + 65535u*uint(round(x.y));
-}
-
-vec2 unpack(uint a)
-{
-    vec2 x = vec2(a%65535u, a/65535u);
-    return clamp(x/65534.0, 0.,1.)*2.0 - 1.0;
-}
-
-vec2 decode(float x)
-{
-    uint X = floatBitsToUint(x);
-    return unpack(X); 
-}
-
-float encode(vec2 x)
-{
-    uint X = pack(x);
-    return uintBitsToFloat(X); 
-}
-
 struct particle
 {
     vec2 X;
     vec2 V;
-    vec2 M;
+    vec4 M;
 };
     
-particle getParticle(vec4 data, vec2 pos)
+particle getParticle(vec4 data, vec4 massa, vec2 pos)
 {
     particle P; 
-    P.X = decode(data.x) + pos;
-    P.V = decode(data.y);
-    P.M = data.zw;
+    P.X = vec2(pos+ data.xy);
+    P.V = data.zw;
+    P.M = massa;
     return P;
 }
 
-vec4 saveParticle(particle P, vec2 pos)
+vec4[2] saveParticle(particle P, vec2 pos)
 {
     vec2 c  = clamp(P.X - pos, vec2(-0.5), vec2(0.5));
-    return vec4(encode(c), encode(P.V), P.M);
+    vec4[2] rtn;
+    rtn[0] = vec4(c, P.V);
+    rtn[1] = P.M;
+    return rtn;
 }
 
 vec3 hash32(vec2 p)
@@ -133,6 +112,79 @@ vec3 distribution(vec2 x, vec2 p, float K)
     return vec3(0.5*(omin + omax), (omax.x - omin.x)*(omax.y - omin.y)/(K*K));
 }
 
+float waterDiffusionRadius(float massa){
+    float difR = 0.1;
+    return difR;
+}
+
+vec2 dirUnitaria(vec2 x){
+    vec2 aux = abs(x);
+    vec2 rtn = vec2(0.);
+    if (x.x != 0.) {
+        rtn.x = x.x/aux.x;
+    } 
+    if (x.y != 0.) {
+        rtn.y = x.y/aux.y;
+    } 
+    return rtn;
+}
+
+bool ePreto(vec4 cor){
+    if(cor.x ==0. && cor.y ==0. && cor.z ==0.) 
+    {
+        return true;
+    }
+    return false;
+}
+
+
+void fBorda(sampler2D info, inout particle P, vec2 pos) {
+    // porcentagem de tempo
+    
+    // vec4 nextPos = texture(info, (P.X+P.V)/R);
+    // vec4 eu = texture(info,pos/R);
+
+    vec2 x = P.X+P.V;
+    float K = waterDiffusionRadius(P.M.w);
+
+    vec2 omin = clamp(x - K*0.5, pos - 0.5, pos + 0.5);
+    vec2 omax = clamp(x + K*0.5, pos - 0.5, pos + 0.5); 
+
+    vec2 difPos = pos -0.5*(omin + omax);
+
+    
+    //vec2 maxPos = (((K+difPos)/K - K)*K + difPos);
+
+    vec2 dir = dirUnitaria(difPos);
+
+    
+    
+    vec4 vert = texture(info, (pos+vec2(dir.x, 0.))/R);
+    vec4 horiz = texture(info, (pos+vec2(0., dir.y))/R);
+
+    if(ePreto(horiz)){
+        P.V.x = -(P.V.x-difPos.x);
+        P.X.x += difPos.x;
+    }
+
+    if(ePreto(vert)){
+        //P.M =vec4(0.);
+        P.V.y = -(P.V.y-difPos.y);
+        P.X.y += difPos.y;
+    }
+    
+
+    // vec4 eu = texture(info, (pos)/R);
+    // if(ePreto(eu)){
+    //     P.V = vec2(0.);
+    // }
+
+
+    
+}
+
+
+
 
 /*vec3 distribution(vec2 x, vec2 p, float K)
 {
@@ -146,96 +198,9 @@ vec3 distribution(vec2 x, vec2 p, float K)
     return vec3(center, m);
 }*/
 
-//diffusion and advection basically
-void Reintegration(sampler2D ch, inout particle P, vec2 pos)
-{
-    //basically integral over all updated neighbor distributions
-    //that fall inside of this pixel
-    //this makes the tracking conservative
-    range(i, -2, 2) range(j, -2, 2)
-    {
-        vec2 tpos = pos + vec2(i,j);
-        vec4 data = texel(ch, tpos);
-       
-        particle P0 = getParticle(data, tpos);
-       
-        P0.X += P0.V*dt; //integrate position
-
-        float difR = 0.9 + 0.21*smoothstep(fluid_rho*0., fluid_rho*0.333, P0.M.x);
-        vec3 D = distribution(P0.X, pos, difR);
-        //the deposited mass into this cell
-        float m = P0.M.x*D.z;
-        
-        //add weighted by mass
-        P.X += D.xy*m;
-        P.V += P0.V*m;
-        P.M.y += P0.M.y*m;
-        
-        //add mass
-        P.M.x += m;
-    }
-    
-    //normalization
-    if(P.M.x != 0.)
-    {
-        P.X /= P.M.x;
-        P.V /= P.M.x;
-        P.M.y /= P.M.x;
-    }
-}
-
-//force calculation and integration
-void Simulation(sampler2D ch, inout particle P, vec2 pos)
-{
-    //Compute the SPH force
-    vec2 F = vec2(0.);
-    vec3 avgV = vec3(0.);
-    range(i, -2, 2) range(j, -2, 2)
-    {
-        vec2 tpos = pos + vec2(i,j);
-        vec4 data = texel(ch, tpos);
-        particle P0 = getParticle(data, tpos);
-        vec2 dx = P0.X - P.X;
-        float avgP = 0.5*P0.M.x*(Pf(P.M) + Pf(P0.M)); 
-        F -= 0.5*G(1.*dx)*avgP*dx;
-        avgV += P0.M.x*G(1.*dx)*vec3(P0.V,1.);
-    }
-    avgV.xy /= avgV.z;
-
-    //viscosity
-    F += 0.*P.M.x*(avgV.xy - P.V);
-    
-    //gravity
-    F += P.M.x*vec2(0., -0.0004);
-
-    if(mouse.z > 0.)
-    {
-        vec2 dm =(mouse.xy - mouse.zw)/10.; 
-        float d = distance(mouse.xy, P.X)/20.;
-        F += 0.001*dm*exp(-d*d);
-       // P.M.y += 0.1*exp(-40.*d*d);
-    }
-    
-    //integrate
-    P.V += F*dt/P.M.x;
-
-    //border 
-    vec3 N = bN(P.X);
-    float vdotN = step(N.z, border_h)*dot(-N.xy, P.V);
-    P.V += 0.5*(N.xy*vdotN + N.xy*abs(vdotN));
-    //P.V += 0.*P.M.x*N.xy*step(abs(N.z), border_h)*exp(-N.z);
-    
-    if(N.z < 0.) P.V = vec2(0.);
 
 
 
-
-    
-    
-    //velocity limit
-    float v = length(P.V);
-    P.V /= (v > 1.)?v:1.;
-}
 
 
 

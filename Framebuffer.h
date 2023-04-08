@@ -16,6 +16,7 @@ class Framebuffer
         std::vector<OpenGLAPI::Texture> textures;
         unsigned int numOutput = 0;
         Shader *shader = nullptr;
+        unsigned int* colorBuffer = nullptr;
 
         public:
 
@@ -38,17 +39,27 @@ class Framebuffer
             //bind();
             int ant = this->numOutput;
             this->numOutput += numOutput;
+            unsigned int buffers[ant + numOutput];
+            for (int i = 0; i < ant; i++)
+            {
+                buffers[i] = colorBuffer[i];
+            }
+            
 
             for(int i = 0; i<numOutput;i++){
 
                 textures.push_back(OpenGLAPI::Texture(Height,Width));
 
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+ ant +i, GL_TEXTURE_2D, textures[ant+ i], 0 );
+                buffers[i+ant] = GL_COLOR_ATTACHMENT0+ ant +i;
 
 
                 if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) std::cout << "ERROR::FRAMEBUFFER:: Framebuffer A is not complete!" << std::endl;
             }
+            colorBuffer = buffers;
+            glDrawBuffers(this->numOutput, this->colorBuffer);
         }
+
 
         void addTexture(OpenGLAPI::Texture text){
             //bind();
