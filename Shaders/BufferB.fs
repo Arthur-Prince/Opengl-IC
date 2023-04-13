@@ -38,7 +38,7 @@ void Simulation(sampler2D ch, sampler2D ch2, inout particle P, vec2 pos)
     F += 0.*P.M.w*(avgV.xy - P.V);
     
     //gravity
-    F += P.M.w*vec2(0., -0.0004);
+    F += P.M.w*vec2(0., -0.004);
 
     if(mouse.z > 0.)
     {
@@ -67,7 +67,7 @@ void Simulation(sampler2D ch, sampler2D ch2, inout particle P, vec2 pos)
     //velocity limit
     float v = length(P.V);
     P.V /= (v > 1.)?v:1.;
-    P.V = clamp(P.V,vec2(-1.0),vec2(1.0));
+    //P.V = clamp(P.V,vec2(-1.0),vec2(1.0));
 }
 
 
@@ -95,22 +95,22 @@ void main()
     
     //vec2 proxP = posV+P.V;
     
-    // if(length(P.X - R*vec2(0.1, 0.92)) < 20.)//se estiver dentro do alcance da área de criação das partículas
-    // {
-    //     P.X = pos;
-    //     P.V = vec2(-0.1);//0.5*Dir(-PI*0.25 - PI*0.5);// + 0.3*sin(0.9*time));
+    if(length(P.X - R*vec2(0.8, 0.92)) < 20.)//se estiver dentro do alcance da área de criação das partículas
+    {
+        P.X = pos;
+        P.V = vec2(0.1,0.);//0.5*Dir(-PI*0.25 - PI*0.5);// + 0.3*sin(0.9*time));
         
-    //     vec3 aux = vec3(0.0,0.0,1.0);
-    //     P.M = vec4(aux,1.0);//mix(P.M, vec4(aux, fluid_rho), 0.5);
-    // }
+        vec3 aux = vec3(0.0,0.0,1.0);
+        P.M = vec4(aux,1.0);//mix(P.M, vec4(aux, fluid_rho), 0.5);
+    }
 
-    // if(length(P.X - R*vec2(0.22, 0.5)) < 20.)//se estiver dentro do alcance da área de criação das partículas
-    // {
-    //     P.X = pos;
-    //     P.V = vec2(-0.1);//0.5*Dir(-PI*0.25 + 0.3*sin(0.3*time));
-    //     vec3 aux = vec3(0.0,1.0,0.0);
-    //     P.M = vec4(aux,1.0);//mix(P.M, vec4(aux, fluid_rho), 0.5);
-    // }
+    if(length(P.X - R*vec2(0.22, 0.5)) < 20.)//se estiver dentro do alcance da área de criação das partículas
+    {
+        P.X = pos;
+        P.V = vec2(-0.1);//0.5*Dir(-PI*0.25 + 0.3*sin(0.3*time));
+        vec3 aux = vec3(0.0,1.0,0.0);
+        P.M = vec4(aux,1.0);//mix(P.M, vec4(aux, fluid_rho), 0.5);
+    }
 
     if(info.z>0. && (info.y!=0. && info.x==0.)){
         P.X = pos;

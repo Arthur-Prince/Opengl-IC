@@ -8,7 +8,7 @@
 #define loop(i,x) for(int i = 0; i < x; i++)
 #define range(i,a,b) for(int i = a; i <= b; i++)
 
-#define dt 1.
+#define dt 0.5
 
 #define border_h 5.
 
@@ -42,7 +42,7 @@ float sdBox( in vec2 p, in vec2 b )
 
 float border(vec2 p)
 {
-    float bound = -sdBox(p - R*0.5, R*vec2(0.5, 0.5)); 
+    float bound = -sdBox(p - R*0.5, R*vec2(0.49, 0.49)); 
     float box = sdBox(Rot(0.*time)*(p - R*vec2(1.5, 0.6)) , R*vec2(0.05, 0.01));
     float drain = -sdBox(p - R*vec2(0.5, 2.0), R*vec2(1.5, 0.5));
     return max(drain,min(bound, box));
@@ -113,7 +113,7 @@ vec3 distribution(vec2 x, vec2 p, float K)
 }
 
 float waterDiffusionRadius(float massa){
-    float difR = 0.1;
+    float difR = 0.6;
     return difR;
 }
 
@@ -137,6 +137,16 @@ bool ePreto(vec4 cor){
     return false;
 }
 
+void cantoNormal(vec4 cor , inout vec2 dir){
+    if(ePreto(cor)){
+        dir *=-1.;
+    }
+}
+
+void rebate(sampler2D info, inout particle P, vec2 pos){
+    
+}
+
 
 void fBorda(sampler2D info, inout particle P, vec2 pos) {
     // porcentagem de tempo
@@ -144,34 +154,64 @@ void fBorda(sampler2D info, inout particle P, vec2 pos) {
     // vec4 nextPos = texture(info, (P.X+P.V)/R);
     // vec4 eu = texture(info,pos/R);
 
+    // vec2 time = (clamp(P.X+P.V, pos + vec2(-0.5), pos + vec2(0.5)) - P.X)/P.V;
+
+    // vec2 sinal = dirUnitaria(P.V);
+
     vec2 x = P.X+P.V;
     float K = waterDiffusionRadius(P.M.w);
 
-    vec2 omin = clamp(x - K*0.5, pos - 0.5, pos + 0.5);
-    vec2 omax = clamp(x + K*0.5, pos - 0.5, pos + 0.5); 
+    // vec2 canto = x + K*sinal;
 
-    vec2 difPos = pos -0.5*(omin + omax);
+    vec2 cantodir[4] = vec2[](vec2(1.,1.), vec2(1.,-1.), vec2(-1.,1.), vec2(-1.,-1.));
 
-    
-    //vec2 maxPos = (((K+difPos)/K - K)*K + difPos);
+    vec4 cantoCor[4];
 
-    vec2 dir = dirUnitaria(difPos);
+    vec2 normalBorda = vec2(0., 0.);
 
-    
-    
-    vec4 vert = texture(info, (pos+vec2(dir.x, 0.))/R);
-    vec4 horiz = texture(info, (pos+vec2(0., dir.y))/R);
+    loop(i, 4){
+        cantoCor[i] = texture(info, (x+K*cantodir[i])/R);
+        cantoNormal(cantoCor[i], cantodir[i]);
+        normalBorda += cantodir[i];
 
-    if(ePreto(horiz)){
-        P.V.x = -(P.V.x-difPos.x);
-        P.X.x += difPos.x;
+    }
+    if(normalBorda!= vec2(0.)&& P.V!=vec2(0.)){
+        normalize(normalBorda);
+
+        P.V = reflect(P.V, normalBorda);
     }
 
-    if(ePreto(vert)){
-        //P.M =vec4(0.);
-        P.V.y = -(P.V.y-difPos.y);
-        P.X.y += difPos.y;
-    }
+
+
+
+    // vec2 omin = clamp(x - K*0.5, pos - 0.5, pos + 0.5);
+    // vec2 omax = clamp(x + K*0.5, pos - 0.5, pos + 0.5); 
+
+    // vec2 difPos = pos -0.5*(omin + omax);
+
+    // //posicao do canto do lado de fora
+    // vec2 outbord = x+difPos;
+
+
+    //vec2 dir = (((K+P.V)/K - K)*K);
+
+    //vec2 dir = dirUnitaria(difPos);
+
+    
+    
+    // vec4 vert = texture(info, (pos+vec2(dir.x, 0.))/R);
+    // vec4 horiz = texture(info, (pos+vec2(0., dir.y))/R);
+
+    // if(ePreto(horiz)){
+    //     P.V.x = -(P.V.x-difPos.x);
+    //     P.X.x += difPos.x;
+    // }
+
+    // if(ePreto(vert)){
+    //     //P.M =vec4(0.);
+    //     P.V.y = -(P.V.y-difPos.y);
+    //     P.X.y += difPos.y;
+    // }
     
 
     // vec4 eu = texture(info, (pos)/R);

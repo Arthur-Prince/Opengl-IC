@@ -91,12 +91,12 @@ void main( )
             P.X = pos;
             P.V = vec2(0.0);
             P.M = vec4(0.0);
-            // if(info.b!= 0.){
-            //     vec3 cor = vec3(0.,1.,0.);
+            if(info.z>0. && (info.y!=0. && info.x==0.)){
+                vec3 cor = vec3(0.,1.,0.);
 
-            //     P.M = vec4(cor,info.b);
-            //     P.V = info.xy;
-            // }
+                P.M = vec4(cor,info.b);
+                P.V = -info.xy;
+            }
             //P.M = vec4(texture(stop,posV).rgb,1.);
         }
     }
