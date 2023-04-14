@@ -9,6 +9,8 @@ in vec2 R;
 in float time;
 in vec2 posV;
 
+
+
 out vec4 U;
 out vec4 ColorMass;
 

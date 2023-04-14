@@ -301,6 +301,7 @@ int main()
         atualShader = FBOB.getShader();
 
         atualShader.use();
+        atualShader.setInt("Frame", frame);
         FBOA.getTexture(0,0);
         atualShader.setSampler("bufferA",0);
         FBOA.getTexture(4,1);

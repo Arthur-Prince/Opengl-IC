@@ -16,6 +16,8 @@
 
 #define fluid_rho 0.5
 
+
+
 float Pf(vec4 rho)
 {
     //return 0.2*rho.x; //gas
@@ -113,7 +115,7 @@ vec3 distribution(vec2 x, vec2 p, float K)
 }
 
 float waterDiffusionRadius(float massa){
-    float difR = 0.6;
+    float difR = 0.001;
     return difR;
 }
 
@@ -175,11 +177,11 @@ void fBorda(sampler2D info, inout particle P, vec2 pos) {
         normalBorda += cantodir[i];
 
     }
-    if(normalBorda!= vec2(0.)&& P.V!=vec2(0.)){
-        normalize(normalBorda);
+    
+    normalize(normalBorda);
 
-        P.V = reflect(P.V, normalBorda);
-    }
+    P.V = reflect(P.V, normalBorda);
+    
 
 
 

@@ -75,11 +75,19 @@ void main()
     // col.xyz = tanh(col.xyz);
     //vec4 data = texel(bufferC, pos); 
     vec4 pixel = texture(stop, posV);
+    vec4 pixel2 = texture(stop, posV-vec2(0.0001)/R);
     vec4 rtn = vec4(0.);
     if(pixel.xyz == vec3(0.)){
         rtn = vec4(1.,0.,0.,0.);
     }
     rtn+= P.M*P.M.w;
+
+    // if(pixel2 == pixel){
+    //     rtn = vec4(1.);
+    // }else{
+    //     rtn = vec4(0.);
+    // }
+
     col = rtn;
     //col += abs(vec4(bord)) +P.M*P.M.w;
     //col = texture(stop,posV);

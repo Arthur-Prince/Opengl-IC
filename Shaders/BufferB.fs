@@ -1,12 +1,15 @@
 #version 460 core
-
 uniform sampler2D bufferA;
 uniform sampler2D cor;
 uniform sampler2D stop;
+uniform int Frame;
 in vec4 mouse;
 in vec2 R;
 in float time;
 in vec2 posV;
+
+
+
 
 out vec4 U;
 out vec4 ColorMass;
@@ -67,7 +70,7 @@ void Simulation(sampler2D ch, sampler2D ch2, inout particle P, vec2 pos)
     //velocity limit
     float v = length(P.V);
     P.V /= (v > 1.)?v:1.;
-    //P.V = clamp(P.V,vec2(-1.0),vec2(1.0));
+    P.V = clamp(P.V,vec2(-1.0),vec2(1.0));
 }
 
 
@@ -80,7 +83,7 @@ void main()
         
     vec4 data = texture(bufferA, posV); 
     vec4 massa = texture(cor, posV);
-    vec4 info = texture(stop, posV);
+    vec4 info = texture(stop, posV); // + vec2(300., 0.)/R- sin(vec2((3*Frame), 0.)/R)/4);
     
     
     
@@ -104,10 +107,10 @@ void main()
         P.M = vec4(aux,1.0);//mix(P.M, vec4(aux, fluid_rho), 0.5);
     }
 
-    if(length(P.X - R*vec2(0.22, 0.5)) < 20.)//se estiver dentro do alcance da área de criação das partículas
+    if(length(P.X - R*( vec2(abs(sin(Frame/R.x)), 0.5))) < 20.)//se estiver dentro do alcance da área de criação das partículas
     {
         P.X = pos;
-        P.V = vec2(-0.1);//0.5*Dir(-PI*0.25 + 0.3*sin(0.3*time));
+        P.V = vec2(-0.5);//0.5*Dir(-PI*0.25 + 0.3*sin(0.3*time));
         vec3 aux = vec3(0.0,1.0,0.0);
         P.M = vec4(aux,1.0);//mix(P.M, vec4(aux, fluid_rho), 0.5);
     }
